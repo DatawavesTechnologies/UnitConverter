@@ -3,29 +3,42 @@ package com.example.unitconvert;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.*;
+
 import androidx.appcompat.app.AppCompatActivity;
 
 public class LengthActivity extends AppCompatActivity {
 
-    String[] lengthUnits = {
+    private final String[] lengthUnits = {
             "Millimeter", "Centimeter", "Meter", "Kilometer",
             "Inch", "Foot", "Yard", "Mile"
     };
+
+    private EditText inputValue, resultText;
+    private Spinner fromSpinner, toSpinner;
+    private Button convertButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.length_activity);
 
-        EditText inputValue = findViewById(R.id.inputValue);
-        Spinner fromSpinner = findViewById(R.id.fromUnitSpinner);
-        Spinner toSpinner = findViewById(R.id.toUnitSpinner);
-        Button convertButton = findViewById(R.id.convertButton);
-        TextView resultText = findViewById(R.id.resultText);
+        inputValue = findViewById(R.id.inputValue);
+        fromSpinner = findViewById(R.id.spinnerFrom);
+        toSpinner = findViewById(R.id.spinnerTo);
+        convertButton = findViewById(R.id.buttonConvert);
+        resultText = findViewById(R.id.resultText);
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, lengthUnits);
+        // Disable the default keyboard
+        inputValue.setShowSoftInputOnFocus(false);
+
+        // Set up the adapter for the unit spinners
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item, lengthUnits);
         fromSpinner.setAdapter(adapter);
         toSpinner.setAdapter(adapter);
+
+        // Set up the custom keypad
+        setUpCustomKeypad(inputValue);
 
         convertButton.setOnClickListener(v -> {
             String inputStr = inputValue.getText().toString();
@@ -34,19 +47,56 @@ public class LengthActivity extends AppCompatActivity {
                 return;
             }
 
-            double value = Double.parseDouble(inputStr);
-            String fromUnit = fromSpinner.getSelectedItem().toString();
-            String toUnit = toSpinner.getSelectedItem().toString();
+            try {
+                double value = Double.parseDouble(inputStr);
+                String fromUnit = fromSpinner.getSelectedItem().toString();
+                String toUnit = toSpinner.getSelectedItem().toString();
 
-            double result = convertLength(value, fromUnit, toUnit);
-            resultText.setText(String.format("%.4f %s", result, toUnit));
+                double result = convertLength(value, fromUnit, toUnit);
+                resultText.setText(String.format("%.4f %s", result, toUnit));
+            } catch (NumberFormatException e) {
+                resultText.setText("Invalid number format.");
+            }
         });
+    }
+
+    // Custom keypad setup
+    private void setUpCustomKeypad(final EditText inputValue) {
+        // Define the numeric button IDs
+        int[] buttonIds = new int[]{
+                R.id.button0, R.id.button1, R.id.button2, R.id.button3,
+                R.id.button4, R.id.button5, R.id.button6, R.id.button7,
+                R.id.button8, R.id.button9, R.id.buttonDelete
+        };
+
+        // OnClickListener for keypad buttons
+        View.OnClickListener keyListener = v -> {
+            Button btn = (Button) v;
+            String btnText = btn.getText().toString();
+            String current = inputValue.getText().toString();
+
+            if (btnText.equals("⌫")) {
+                if (!current.isEmpty()) {
+                    inputValue.setText(current.substring(0, current.length() - 1));
+                    inputValue.setSelection(inputValue.getText().length());
+                }
+            } else {
+                inputValue.setText(current + btnText);
+                inputValue.setSelection(inputValue.getText().length());
+            }
+        };
+
+        // Set the listener for the keypad buttons
+        for (int id : buttonIds) {
+            Button b = findViewById(id);
+            b.setOnClickListener(keyListener);
+        }
     }
 
     private double convertLength(double value, String fromUnit, String toUnit) {
         double valueInMeters = 0;
 
-        // Convert from any unit to meters
+        // Convert to base unit (Meters)
         switch (fromUnit) {
             case "Millimeter":
                 valueInMeters = value / 1000;
@@ -73,42 +123,31 @@ public class LengthActivity extends AppCompatActivity {
                 valueInMeters = value * 1609.344;
                 break;
             default:
-                valueInMeters = 0;
+                Toast.makeText(this, "Unknown from-unit", Toast.LENGTH_SHORT).show();
+                return 0;
         }
 
-        double result = 0;
-
-        // Convert from meters to target unit
+        // Convert from base unit (Meters) to target unit
         switch (toUnit) {
             case "Millimeter":
-                result = valueInMeters * 1000;
-                break;
+                return valueInMeters * 1000;
             case "Centimeter":
-                result = valueInMeters * 100;
-                break;
+                return valueInMeters * 100;
             case "Meter":
-                result = valueInMeters;
-                break;
+                return valueInMeters;
             case "Kilometer":
-                result = valueInMeters / 1000;
-                break;
+                return valueInMeters / 1000;
             case "Inch":
-                result = valueInMeters / 0.0254;
-                break;
+                return valueInMeters / 0.0254;
             case "Foot":
-                result = valueInMeters / 0.3048;
-                break;
+                return valueInMeters / 0.3048;
             case "Yard":
-                result = valueInMeters / 0.9144;
-                break;
+                return valueInMeters / 0.9144;
             case "Mile":
-                result = valueInMeters / 1609.344;
-                break;
+                return valueInMeters / 1609.344;
             default:
-                result = 0;
+                Toast.makeText(this, "Unknown to-unit", Toast.LENGTH_SHORT).show();
+                return 0;
         }
-
-        return result;
     }
 }
-

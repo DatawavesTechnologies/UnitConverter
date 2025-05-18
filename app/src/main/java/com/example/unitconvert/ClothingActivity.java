@@ -2,85 +2,143 @@ package com.example.unitconvert;
 
 import android.os.Bundle;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.Spinner;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.*;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class ClothingActivity extends AppCompatActivity {
 
-    private Spinner spinnerFromRegion, spinnerToRegion, spinnerSize;
-    private Button buttonConvert;
-    private TextView textResult;
+    private EditText inputValue, resultText;
+    private Spinner spinnerFrom, spinnerTo;
+    private Button convertButton;
 
-    private String[] regions = {"US", "UK", "EU", "Asia"};
-    private String[] standardSizes = {"S", "M", "L", "XL"};
+    private final String[] clothingSystems = {
+            "US", "UK", "EU", "Asia", "Small (S)", "Medium (M)", "Large (L)", "Extra Large (XL)"
+    };
+
+    private final Map<String, Integer> sizeScaleMap = new HashMap<String, Integer>() {{
+        put("US", 1);
+        put("UK", 1);
+        put("EU", 2);
+        put("Asia", 0);
+        put("Small (S)", 38);
+        put("Medium (M)", 40);
+        put("Large (L)", 42);
+        put("Extra Large (XL)", 44);
+    }};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.clothing_activity);
 
-        spinnerFromRegion = findViewById(R.id.spinnerFromRegion);
-        spinnerToRegion = findViewById(R.id.spinnerToRegion);
-        spinnerSize = findViewById(R.id.spinnerSize);
-        buttonConvert = findViewById(R.id.buttonConvert);
-        textResult = findViewById(R.id.textResult);
+        inputValue = findViewById(R.id.inputValue);
+        resultText = findViewById(R.id.resultText);
+        spinnerFrom = findViewById(R.id.spinnerFrom);
+        spinnerTo = findViewById(R.id.spinnerTo);
+        convertButton = findViewById(R.id.buttonConvert);
 
-        ArrayAdapter<String> regionAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item, regions);
-        regionAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        inputValue.setShowSoftInputOnFocus(false); // Disable default keyboard
 
-        ArrayAdapter<String> sizeAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item, standardSizes);
-        sizeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, clothingSystems);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerFrom.setAdapter(adapter);
+        spinnerTo.setAdapter(adapter);
 
-        spinnerFromRegion.setAdapter(regionAdapter);
-        spinnerToRegion.setAdapter(regionAdapter);
-        spinnerSize.setAdapter(sizeAdapter);
+        convertButton.setOnClickListener(v -> convertClothingSize());
 
-        buttonConvert.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String size = spinnerSize.getSelectedItem().toString();
-                String fromRegion = spinnerFromRegion.getSelectedItem().toString();
-                String toRegion = spinnerToRegion.getSelectedItem().toString();
-
-                String convertedSize = convertClothingSize(size, fromRegion, toRegion);
-                textResult.setText(String.format("%s (%s)", convertedSize, toRegion));
-            }
-        });
+        setUpCustomKeypad(); // 🔑 Add this to enable custom input
     }
 
-    private String convertClothingSize(String size, String fromRegion, String toRegion) {
-        Map<String, Map<String, String>> regionToStandardMap = Map.of(
-                "US", Map.of("S", "S", "M", "M", "L", "L", "XL", "XL"),
-                "UK", Map.of("8", "S", "10", "M", "12", "L", "14", "XL"),
-                "EU", Map.of("36", "S", "38", "M", "40", "L", "42", "XL"),
-                "Asia", Map.of("85", "S", "90", "M", "95", "L", "100", "XL")
-        );
+    private void setUpCustomKeypad() {
+        int[] buttonIds = new int[] {
+                R.id.button0, R.id.button1, R.id.button2, R.id.button3,
+                R.id.button4, R.id.button5, R.id.button6, R.id.button7,
+                R.id.button8, R.id.button9, R.id.buttonDelete
+        };
 
-        Map<String, Map<String, String>> standardToRegionMap = Map.of(
-                "US", Map.of("S", "S", "M", "M", "L", "L", "XL", "XL"),
-                "UK", Map.of("S", "8", "M", "10", "L", "12", "XL", "14"),
-                "EU", Map.of("S", "36", "M", "38", "L", "40", "XL", "42"),
-                "Asia", Map.of("S", "85", "M", "90", "L", "95", "XL", "100")
-        );
+        View.OnClickListener keyListener = v -> {
+            Button btn = (Button) v;
+            String btnText = btn.getText().toString();
+            String current = inputValue.getText().toString();
 
-        // Convert selected size to standard size
-        String standardSize = regionToStandardMap.getOrDefault(fromRegion, Map.of()).get(size);
-        if (standardSize == null) {
-            return "Invalid size or region";
+            if (btnText.equals("⌫")) {
+                if (!current.isEmpty()) {
+                    inputValue.setText(current.substring(0, current.length() - 1));
+                    inputValue.setSelection(inputValue.getText().length());
+                }
+            } else {
+                inputValue.setText(current + btnText);
+                inputValue.setSelection(inputValue.getText().length());
+            }
+        };
+
+        for (int id : buttonIds) {
+            Button b = findViewById(id);
+            b.setOnClickListener(keyListener);
+        }
+    }
+
+    private void convertClothingSize() {
+        String inputStr = inputValue.getText().toString().trim();
+        if (inputStr.isEmpty()) {
+            Toast.makeText(this, "Please enter a size value", Toast.LENGTH_SHORT).show();
+            return;
         }
 
-        // Convert from standard size to target region size
-        return standardToRegionMap.getOrDefault(toRegion, Map.of()).getOrDefault(standardSize, size);
+        String fromUnit = spinnerFrom.getSelectedItem().toString();
+        String toUnit = spinnerTo.getSelectedItem().toString();
+
+        try {
+            int standardizedSize = getStandardSize(inputStr, fromUnit);
+            String convertedSize = getSizeFromStandard(standardizedSize, toUnit);
+            resultText.setText(String.format("%s (%s)", convertedSize, toUnit));
+        } catch (Exception e) {
+            resultText.setText("Conversion not possible.");
+        }
+    }
+
+    private int getStandardSize(String input, String unit) throws Exception {
+        switch (unit) {
+            case "US":
+            case "UK":
+            case "EU":
+            case "Asia":
+                return Integer.parseInt(input); // Numeric sizes
+            case "Small (S)":
+                return 38;
+            case "Medium (M)":
+                return 40;
+            case "Large (L)":
+                return 42;
+            case "Extra Large (XL)":
+                return 44;
+            default:
+                throw new Exception("Unknown unit");
+        }
+    }
+
+    private String getSizeFromStandard(int size, String unit) {
+        switch (unit) {
+            case "US":
+            case "UK":
+            case "EU":
+            case "Asia":
+                return String.valueOf(size);
+            case "Small (S)":
+                return size <= 38 ? "S" : "Too big for S";
+            case "Medium (M)":
+                return size <= 40 ? "M" : "Too big for M";
+            case "Large (L)":
+                return size <= 42 ? "L" : "Too big for L";
+            case "Extra Large (XL)":
+                return size >= 43 ? "XL" : "Too small for XL";
+            default:
+                return "N/A";
+        }
     }
 }

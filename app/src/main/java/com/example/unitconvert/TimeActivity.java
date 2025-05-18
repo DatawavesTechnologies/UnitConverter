@@ -1,6 +1,5 @@
 package com.example.unitconvert;
 
-
 import android.os.Bundle;
 import android.view.View;
 import android.widget.*;
@@ -9,115 +8,141 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class TimeActivity extends AppCompatActivity {
 
-    String[] timeUnits = {
-            "Milliseconds", "Seconds", "Minutes", "Hours", "Days",
-            "Weeks", "Months", "Years"
+    private EditText inputValue, resultText;
+    private Spinner fromSpinner, toSpinner;
+    private Button convertButton;
+
+    private final String[] areaUnits = {
+            "Square Millimeter", "Square Centimeter", "Square Meter", "Square Kilometer",
+            "Square Inch", "Square Foot", "Square Yard", "Acre", "Hectare"
     };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.time_activity);
+        setContentView(R.layout.area_activity);
 
-        final EditText inputTime = findViewById(R.id.inputTime);
-        final Spinner fromSpinner = findViewById(R.id.fromTimeUnit);
-        final Spinner toSpinner = findViewById(R.id.toTimeUnit);
-        final Button convertBtn = findViewById(R.id.convertTimeBtn);
-        final TextView resultView = findViewById(R.id.timeResult);
+        // Bind UI elements
+        inputValue = findViewById(R.id.inputValue);
+        resultText = findViewById(R.id.etAmountTo);  // Rename this in XML if needed
+        fromSpinner = findViewById(R.id.spinnerFrom);
+        toSpinner = findViewById(R.id.spinnerTo);
+        convertButton = findViewById(R.id.buttonConvert);
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, timeUnits);
+        // Disable system keyboard
+        inputValue.setShowSoftInputOnFocus(false);
+
+        // Set spinner options
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item, areaUnits);
         fromSpinner.setAdapter(adapter);
         toSpinner.setAdapter(adapter);
 
-        convertBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                String input = inputTime.getText().toString().trim();
-                if (input.isEmpty()) {
-                    resultView.setText("Enter a value");
-                    return;
-                }
+        // Convert button logic
+        convertButton.setOnClickListener(v -> {
+            String inputStr = inputValue.getText().toString();
+            if (inputStr.isEmpty()) {
+                Toast.makeText(TimeActivity.this, "Please enter a value", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-                double value = Double.parseDouble(input);
+            try {
+                double value = Double.parseDouble(inputStr);
                 String fromUnit = fromSpinner.getSelectedItem().toString();
                 String toUnit = toSpinner.getSelectedItem().toString();
-
-                double result = convertTime(value, fromUnit, toUnit);
-                resultView.setText(String.format("%.4f %s", result, toUnit));
+                double result = convertArea(value, fromUnit, toUnit);
+                resultText.setText(String.format("%.4f", result));
+            } catch (NumberFormatException e) {
+                Toast.makeText(TimeActivity.this, "Invalid input", Toast.LENGTH_SHORT).show();
             }
         });
+
+        setUpCustomKeypad(); // Set up keypad
     }
 
-    private double convertTime(double value, String fromUnit, String toUnit) {
-        double valueInSeconds = 0;
+    private void setUpCustomKeypad() {
+        int[] buttonIds = new int[]{
+                R.id.button0, R.id.button1, R.id.button2, R.id.button3,
+                R.id.button4, R.id.button5, R.id.button6, R.id.button7,
+                R.id.button8, R.id.button9, R.id.buttonDot, R.id.buttonDelete
+        };
 
-        if (fromUnit.equals("Milliseconds"))
-        {
-            valueInSeconds = value / 1000;
-        }
-        else if (fromUnit.equals("Seconds"))
-        {
-            valueInSeconds = value;
-        }
-        else if (fromUnit.equals("Minutes"))
-        {
-            valueInSeconds = value * 60;
-        }
-        else if (fromUnit.equals("Hours"))
-        {
-            valueInSeconds = value * 3600;
-        }
-        else if (fromUnit.equals("Days"))
-        {
-            valueInSeconds = value * 86400;
-        }
-        else if (fromUnit.equals("Weeks"))
-        {
-            valueInSeconds = value * 604800;
-        }
-        else if (fromUnit.equals("Months"))
-        {
-            valueInSeconds = value * 2.628e6;
-        }
-        else if (fromUnit.equals("Years"))
-        {
-            valueInSeconds = value * 3.154e7;
-        }
+        View.OnClickListener keyListener = v -> {
+            Button btn = (Button) v;
+            String btnText = btn.getText().toString();
+            String current = inputValue.getText().toString();
 
-        double result = 0;
-        if (toUnit.equals("Milliseconds"))
-        {
-            result = valueInSeconds * 1000;
+            if (btnText.equals("⌫")) {
+                if (!current.isEmpty()) {
+                    inputValue.setText(current.substring(0, current.length() - 1));
+                    inputValue.setSelection(inputValue.getText().length());
+                }
+            } else {
+                inputValue.setText(current + btnText);
+                inputValue.setSelection(inputValue.getText().length());
+            }
+        };
+
+        for (int id : buttonIds) {
+            Button b = findViewById(id);
+            b.setOnClickListener(keyListener);
         }
-        else if (toUnit.equals("Seconds"))
-        {
-            result = valueInSeconds;
-        }
-        else if (toUnit.equals("Minutes"))
-        {
-            result = valueInSeconds / 60;
-        }
-        else if (toUnit.equals("Hours"))
-        {
-            result = valueInSeconds / 3600;
-        }
-        else if (toUnit.equals("Days"))
-        {
-            result = valueInSeconds / 86400;
-        }
-        else if (toUnit.equals("Weeks"))
-        {
-            result = valueInSeconds / 604800;
-        }
-        else if (toUnit.equals("Months"))
-        {
-            result = valueInSeconds / 2.628e6;
-        }
-        else if (toUnit.equals("Years"))
-        {
-            result = valueInSeconds / 3.154e7;
+    }
+
+    private double convertArea(double value, String fromUnit, String toUnit) {
+        double valueInSquareMeters = 0;
+
+        switch (fromUnit) {
+            case "Square Millimeter":
+                valueInSquareMeters = value / 1_000_000;
+                break;
+            case "Square Centimeter":
+                valueInSquareMeters = value / 10_000;
+                break;
+            case "Square Meter":
+                valueInSquareMeters = value;
+                break;
+            case "Square Kilometer":
+                valueInSquareMeters = value * 1_000_000;
+                break;
+            case "Square Inch":
+                valueInSquareMeters = value * 0.00064516;
+                break;
+            case "Square Foot":
+                valueInSquareMeters = value * 0.092903;
+                break;
+            case "Square Yard":
+                valueInSquareMeters = value * 0.836127;
+                break;
+            case "Acre":
+                valueInSquareMeters = value * 4046.856;
+                break;
+            case "Hectare":
+                valueInSquareMeters = value * 10_000;
+                break;
         }
 
-        return result;
+        switch (toUnit) {
+            case "Square Millimeter":
+                return valueInSquareMeters * 1_000_000;
+            case "Square Centimeter":
+                return valueInSquareMeters * 10_000;
+            case "Square Meter":
+                return valueInSquareMeters;
+            case "Square Kilometer":
+                return valueInSquareMeters / 1_000_000;
+            case "Square Inch":
+                return valueInSquareMeters / 0.00064516;
+            case "Square Foot":
+                return valueInSquareMeters / 0.092903;
+            case "Square Yard":
+                return valueInSquareMeters / 0.836127;
+            case "Acre":
+                return valueInSquareMeters / 4046.856;
+            case "Hectare":
+                return valueInSquareMeters / 10_000;
+        }
+
+        return 0;
     }
 }

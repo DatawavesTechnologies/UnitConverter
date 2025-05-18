@@ -2,13 +2,7 @@ package com.example.unitconvert;
 
 import android.os.Bundle;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.Spinner;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.*;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -26,15 +20,15 @@ public class WeighttActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.weigjht_activity);
-
+        setContentView(R.layout.weigjht_activity); // Note: Make sure XML file name is correct
+        inputValue.setShowSoftInputOnFocus(false);
         inputValue = findViewById(R.id.inputValue);
         spinnerFrom = findViewById(R.id.spinnerFrom);
         spinnerTo = findViewById(R.id.spinnerTo);
         textResult = findViewById(R.id.textResult);
-        convertButton = findViewById(R.id.convertButton);
+        convertButton = findViewById(R.id.buttonConvert);
 
-        // Setup Spinners
+        // Set up spinner adapter
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, units);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerFrom.setAdapter(adapter);
@@ -46,6 +40,7 @@ public class WeighttActivity extends AppCompatActivity {
                 convertWeightAndDisplay();
             }
         });
+        setUpCustomKeypad();
     }
 
     private void convertWeightAndDisplay() {
@@ -63,45 +58,85 @@ public class WeighttActivity extends AppCompatActivity {
             return;
         }
 
-        String fromUnit = (String) spinnerFrom.getSelectedItem();
-        String toUnit = (String) spinnerTo.getSelectedItem();
+        String fromUnit = spinnerFrom.getSelectedItem().toString();
+        String toUnit = spinnerTo.getSelectedItem().toString();
 
         double result = convertWeight(input, fromUnit, toUnit);
         textResult.setText(String.format("%.6f %s", result, toUnit));
+
     }
 
+    private void setUpCustomKeypad() {
+        int[] buttonIds = new int[]{
+                R.id.button0, R.id.button1, R.id.button2, R.id.button3,
+                R.id.button4, R.id.button5, R.id.button6, R.id.button7,
+                R.id.button8, R.id.button9, R.id.buttonDot, R.id.buttonDelete
+        };
+
+        View.OnClickListener keyListener = v -> {
+            Button btn = (Button) v;
+            String btnText = btn.getText().toString();
+            String current = inputValue.getText().toString();
+
+            if (btnText.equals("⌫")) {
+                if (!current.isEmpty()) {
+                    inputValue.setText(current.substring(0, current.length() - 1));
+                    inputValue.setSelection(inputValue.getText().length());
+                }
+            } else {
+                inputValue.setText(current + btnText);
+                inputValue.setSelection(inputValue.getText().length());
+            }
+        };
+
+        for (int id : buttonIds) {
+            Button b = findViewById(id);
+            b.setOnClickListener(keyListener);
+        }
+    }
     private double convertWeight(double value, String fromUnit, String toUnit) {
-        double valueInKg = 0;
+        double valueInKg;
 
-        if (fromUnit.equals("Milligram")) {
-            valueInKg = value / 1_000_000;
-        } else if (fromUnit.equals("Gram")) {
-            valueInKg = value / 1000;
-        } else if (fromUnit.equals("Kilogram")) {
-            valueInKg = value;
-        } else if (fromUnit.equals("Ton")) {
-            valueInKg = value * 1000;
-        } else if (fromUnit.equals("Pound")) {
-            valueInKg = value * 0.45359237;
-        } else if (fromUnit.equals("Ounce")) {
-            valueInKg = value * 0.02834952;
+        // Convert to kilograms
+        switch (fromUnit) {
+            case "Milligram":
+                valueInKg = value / 1_000_000;
+                break;
+            case "Gram":
+                valueInKg = value / 1000;
+                break;
+            case "Kilogram":
+                valueInKg = value;
+                break;
+            case "Ton":
+                valueInKg = value * 1000;
+                break;
+            case "Pound":
+                valueInKg = value * 0.45359237;
+                break;
+            case "Ounce":
+                valueInKg = value * 0.02834952;
+                break;
+            default:
+                valueInKg = 0;
         }
 
-        double result = 0;
-        if (toUnit.equals("Milligram")) {
-            result = valueInKg * 1_000_000;
-        } else if (toUnit.equals("Gram")) {
-            result = valueInKg * 1000;
-        } else if (toUnit.equals("Kilogram")) {
-            result = valueInKg;
-        } else if (toUnit.equals("Ton")) {
-            result = valueInKg / 1000;
-        } else if (toUnit.equals("Pound")) {
-            result = valueInKg / 0.45359237;
-        } else if (toUnit.equals("Ounce")) {
-            result = valueInKg / 0.02834952;
+        // Convert from kilograms to target unit
+        switch (toUnit) {
+            case "Milligram":
+                return valueInKg * 1_000_000;
+            case "Gram":
+                return valueInKg * 1000;
+            case "Kilogram":
+                return valueInKg;
+            case "Ton":
+                return valueInKg / 1000;
+            case "Pound":
+                return valueInKg / 0.45359237;
+            case "Ounce":
+                return valueInKg / 0.02834952;
+            default:
+                return 0;
         }
-
-        return result;
     }
 }

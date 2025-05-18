@@ -21,7 +21,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".Currencyconvert"/>
+        <activity android:name=".CurrencyConvertActivity"/>
         <activity android:name=".AreaActivity"/>
         <activity android:name=".DataActivity"/>
         <activity android:name=".ShoeActivity"/>
@@ -36,10 +36,11 @@
         <activity android:name=".VolumeActivity"/>
         <activity android:name=".AngleActivity"/>
         <activity android:name=".PressureActivity"/>
-        <activity android:name=".ClothingActivity"/>
         <activity android:name=".FrequencyActivity"/>
         <activity android:name=".EnergyActivity"/>
         <activity android:name=".LengthActivity"/>
+        <activity android:name=".DigitalActivity"/>
+        <activity android:name=".ClothingActivity"/>
     </application>
 
 </manifest>

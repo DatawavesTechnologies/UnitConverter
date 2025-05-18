@@ -3,11 +3,16 @@ package com.example.unitconvert;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.*;
+
 import androidx.appcompat.app.AppCompatActivity;
 
 public class AreaActivity extends AppCompatActivity {
 
-    String[] areaUnits = {
+    private EditText inputValue, resultText;
+    private Spinner fromSpinner, toSpinner;
+    private Button convertButton;
+
+    private final String[] areaUnits = {
             "Square Millimeter", "Square Centimeter", "Square Meter", "Square Kilometer",
             "Square Inch", "Square Foot", "Square Yard", "Acre", "Hectare"
     };
@@ -17,33 +22,68 @@ public class AreaActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.area_activity);
 
-        EditText inputValue = findViewById(R.id.inputValue);
-        Spinner fromSpinner = findViewById(R.id.fromUnitSpinner);
-        Spinner toSpinner = findViewById(R.id.toUnitSpinner);
-        Button convertButton = findViewById(R.id.convertButton);
-        TextView resultText = findViewById(R.id.resultText);
+        inputValue = findViewById(R.id.inputValue);
+        resultText = findViewById(R.id.etAmountTo);
+        fromSpinner = findViewById(R.id.spinnerFrom);
+        toSpinner = findViewById(R.id.spinnerTo);
+        convertButton = findViewById(R.id.buttonConvert);
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, areaUnits);
+        // Disable default soft keyboard
+        inputValue.setShowSoftInputOnFocus(false);
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item, areaUnits);
         fromSpinner.setAdapter(adapter);
         toSpinner.setAdapter(adapter);
 
-        convertButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String inputStr = inputValue.getText().toString();
-                if (inputStr.isEmpty()) {
-                    resultText.setText("Please enter a value.");
-                    return;
-                }
+        convertButton.setOnClickListener(v -> {
+            String inputStr = inputValue.getText().toString();
+            if (inputStr.isEmpty()) {
+                Toast.makeText(AreaActivity.this, "Please enter a value", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
+            try {
                 double value = Double.parseDouble(inputStr);
                 String fromUnit = fromSpinner.getSelectedItem().toString();
                 String toUnit = toSpinner.getSelectedItem().toString();
-
                 double result = convertArea(value, fromUnit, toUnit);
-                resultText.setText(String.format("%.4f %s", result, toUnit));
+                resultText.setText(String.format("%.4f", result));
+            } catch (NumberFormatException e) {
+                Toast.makeText(AreaActivity.this, "Invalid input", Toast.LENGTH_SHORT).show();
             }
         });
+
+        setUpCustomKeypad();
+    }
+
+    private void setUpCustomKeypad() {
+        int[] buttonIds = new int[]{
+                R.id.button0, R.id.button1, R.id.button2, R.id.button3,
+                R.id.button4, R.id.button5, R.id.button6, R.id.button7,
+                R.id.button8, R.id.button9, R.id.buttonDot, R.id.buttonDelete
+        };
+
+        View.OnClickListener keyListener = v -> {
+            Button btn = (Button) v;
+            String btnText = btn.getText().toString();
+            String current = inputValue.getText().toString();
+
+            if (btnText.equals("⌫")) {
+                if (!current.isEmpty()) {
+                    inputValue.setText(current.substring(0, current.length() - 1));
+                    inputValue.setSelection(inputValue.getText().length());
+                }
+            } else {
+                inputValue.setText(current + btnText);
+                inputValue.setSelection(inputValue.getText().length());
+            }
+        };
+
+        for (int id : buttonIds) {
+            Button b = findViewById(id);
+            b.setOnClickListener(keyListener);
+        }
     }
 
     private double convertArea(double value, String fromUnit, String toUnit) {
@@ -79,38 +119,27 @@ public class AreaActivity extends AppCompatActivity {
                 break;
         }
 
-        double result = 0;
-
         switch (toUnit) {
             case "Square Millimeter":
-                result = valueInSquareMeters * 1_000_000;
-                break;
+                return valueInSquareMeters * 1_000_000;
             case "Square Centimeter":
-                result = valueInSquareMeters * 10_000;
-                break;
+                return valueInSquareMeters * 10_000;
             case "Square Meter":
-                result = valueInSquareMeters;
-                break;
+                return valueInSquareMeters;
             case "Square Kilometer":
-                result = valueInSquareMeters / 1_000_000;
-                break;
+                return valueInSquareMeters / 1_000_000;
             case "Square Inch":
-                result = valueInSquareMeters / 0.00064516;
-                break;
+                return valueInSquareMeters / 0.00064516;
             case "Square Foot":
-                result = valueInSquareMeters / 0.092903;
-                break;
+                return valueInSquareMeters / 0.092903;
             case "Square Yard":
-                result = valueInSquareMeters / 0.836127;
-                break;
+                return valueInSquareMeters / 0.836127;
             case "Acre":
-                result = valueInSquareMeters / 4046.856;
-                break;
+                return valueInSquareMeters / 4046.856;
             case "Hectare":
-                result = valueInSquareMeters / 10_000;
-                break;
+                return valueInSquareMeters / 10_000;
         }
 
-        return result;
+        return 0;
     }
 }

@@ -2,13 +2,7 @@ package com.example.unitconvert;
 
 import android.os.Bundle;
 import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.Spinner;
-import android.widget.TextView;
-import android.widget.Toast;
-
+import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.HashMap;
@@ -16,12 +10,11 @@ import java.util.Map;
 
 public class ShoeActivity extends AppCompatActivity {
 
-    private EditText inputValue;
+    private EditText inputValue, textResult;
     private Spinner spinnerFrom, spinnerTo;
     private Button buttonConvert;
-    private TextView textResult;
 
-    private String[] shoeSystems = {"US", "UK", "EU", "India", "Japan", "Centimeters"};
+    private final String[] shoeSystems = {"US", "UK", "EU", "India", "Japan", "Centimeters"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,41 +26,74 @@ public class ShoeActivity extends AppCompatActivity {
         spinnerTo = findViewById(R.id.spinnerTo);
         buttonConvert = findViewById(R.id.buttonConvert);
         textResult = findViewById(R.id.textResult);
+        inputValue.setShowSoftInputOnFocus(false); // Disable default system keyboard
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                this, android.R.layout.simple_spinner_item, shoeSystems);
+        // Set up the adapter for the shoe size systems
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, shoeSystems);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
         spinnerFrom.setAdapter(adapter);
         spinnerTo.setAdapter(adapter);
 
-        buttonConvert.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String inputStr = inputValue.getText().toString();
-                if (inputStr.isEmpty()) {
-                    Toast.makeText(ShoeActivity.this, "Please enter a shoe size", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                int value;
-                try {
-                    value = Integer.parseInt(inputStr);
-                } catch (NumberFormatException e) {
-                    Toast.makeText(ShoeActivity.this, "Invalid number", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                String fromSystem = spinnerFrom.getSelectedItem().toString();
-                String toSystem = spinnerTo.getSelectedItem().toString();
-
-                int result = convertShoeSize(value, fromSystem, toSystem);
-                textResult.setText(result + " (" + toSystem + ")");
+        // Handle button click to trigger the conversion
+        buttonConvert.setOnClickListener(v -> {
+            String inputStr = inputValue.getText().toString();
+            if (inputStr.isEmpty()) {
+                Toast.makeText(ShoeActivity.this, "Please enter a shoe size", Toast.LENGTH_SHORT).show();
+                return;
             }
+
+            // Parse input to integer
+            int value;
+            try {
+                value = Integer.parseInt(inputStr);
+            } catch (NumberFormatException e) {
+                Toast.makeText(ShoeActivity.this, "Invalid number", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            String fromSystem = spinnerFrom.getSelectedItem().toString();
+            String toSystem = spinnerTo.getSelectedItem().toString();
+
+            // Convert the shoe size
+            int result = convertShoeSize(value, fromSystem, toSystem);
+            textResult.setText(String.format("%d (%s)", result, toSystem));
         });
+
+        setUpCustomKeypad(); // Set up custom input keypad
+    }
+
+    private void setUpCustomKeypad() {
+        int[] buttonIds = new int[]{
+                R.id.button0, R.id.button1, R.id.button2, R.id.button3,
+                R.id.button4, R.id.button5, R.id.button6, R.id.button7,
+                R.id.button8, R.id.button9, R.id.buttonDelete
+        };
+
+        View.OnClickListener keyListener = v -> {
+            Button btn = (Button) v;
+            String btnText = btn.getText().toString();
+            String current = inputValue.getText().toString();
+
+            if (btnText.equals("⌫")) {
+                if (!current.isEmpty()) {
+                    inputValue.setText(current.substring(0, current.length() - 1));
+                    inputValue.setSelection(inputValue.getText().length());
+                }
+            } else {
+                inputValue.setText(current + btnText);
+                inputValue.setSelection(inputValue.getText().length());
+            }
+        };
+
+        for (int id : buttonIds) {
+            Button b = findViewById(id);
+            b.setOnClickListener(keyListener);
+        }
     }
 
     private int convertShoeSize(int value, String fromSystem, String toSystem) {
+        // Define conversion offsets for each shoe system
         Map<String, Integer> offsetMap = new HashMap<>();
         offsetMap.put("US", 0);
         offsetMap.put("UK", -1);
@@ -76,11 +102,14 @@ public class ShoeActivity extends AppCompatActivity {
         offsetMap.put("Japan", 18);
         offsetMap.put("Centimeters", 18);
 
-        int fromOffset = offsetMap.containsKey(fromSystem) ? offsetMap.get(fromSystem) : 0;
-        int toOffset = offsetMap.containsKey(toSystem) ? offsetMap.get(toSystem) : 0;
+        // Get the offset for the input shoe system and target system
+        int fromOffset = offsetMap.getOrDefault(fromSystem, 0);
+        int toOffset = offsetMap.getOrDefault(toSystem, 0);
 
+        // Convert the input value to the US shoe size
         int usSize = value + fromOffset;
+
+        // Convert from US size to the target shoe system
         return usSize - toOffset;
     }
 }
-

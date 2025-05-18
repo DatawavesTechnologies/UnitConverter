@@ -8,7 +8,11 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class VolumeActivity extends AppCompatActivity {
 
-    String[] volumeUnits = {
+    private EditText inputVolume;
+    private EditText resultView;
+    private Spinner fromSpinner, toSpinner;
+
+    private final String[] volumeUnits = {
             "Milliliter", "Liter", "Cubic meter", "Gallon (US)",
             "Quart", "Pint", "Cubic inch"
     };
@@ -18,15 +22,19 @@ public class VolumeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.volume_activity);
 
-        final EditText inputVolume = findViewById(R.id.inputVolume);
-        final Spinner fromSpinner = findViewById(R.id.fromVolumeUnit);
-        final Spinner toSpinner = findViewById(R.id.toVolumeUnit);
-        final Button convertBtn = findViewById(R.id.convertVolumeBtn);
-        final TextView resultView = findViewById(R.id.volumeResult);
+        inputVolume = findViewById(R.id.inputValue);
+        resultView = findViewById(R.id.textResult);
+        fromSpinner = findViewById(R.id.spinnerFrom);
+        toSpinner = findViewById(R.id.spinnerTo);
+        Button convertBtn = findViewById(R.id.buttonConvert);
+
+        inputVolume.setShowSoftInputOnFocus(false); // Hide system keyboard
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, volumeUnits);
         fromSpinner.setAdapter(adapter);
         toSpinner.setAdapter(adapter);
+
+        setUpCustomKeypad(); // <-- Call custom keypad setup
 
         convertBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -37,7 +45,14 @@ public class VolumeActivity extends AppCompatActivity {
                     return;
                 }
 
-                double value = Double.parseDouble(input);
+                double value;
+                try {
+                    value = Double.parseDouble(input);
+                } catch (NumberFormatException e) {
+                    resultView.setText("Invalid input");
+                    return;
+                }
+
                 String fromUnit = fromSpinner.getSelectedItem().toString();
                 String toUnit = toSpinner.getSelectedItem().toString();
 
@@ -47,68 +62,79 @@ public class VolumeActivity extends AppCompatActivity {
         });
     }
 
+    private void setUpCustomKeypad() {
+        int[] buttonIds = new int[]{
+                R.id.button0, R.id.button1, R.id.button2, R.id.button3,
+                R.id.button4, R.id.button5, R.id.button6, R.id.button7,
+                R.id.button8, R.id.button9, R.id.buttonDot, R.id.buttonDelete
+        };
+
+        View.OnClickListener keyListener = v -> {
+            Button btn = (Button) v;
+            String btnText = btn.getText().toString();
+            String current = inputVolume.getText().toString();
+
+            if (btnText.equals("⌫")) {
+                if (!current.isEmpty()) {
+                    inputVolume.setText(current.substring(0, current.length() - 1));
+                    inputVolume.setSelection(inputVolume.getText().length());
+                }
+            } else {
+                inputVolume.setText(current + btnText);
+                inputVolume.setSelection(inputVolume.getText().length());
+            }
+        };
+
+        for (int id : buttonIds) {
+            Button b = findViewById(id);
+            b.setOnClickListener(keyListener);
+        }
+    }
+
     private double convertVolume(double value, String fromUnit, String toUnit) {
         double valueInLiters = 0;
 
-        if (fromUnit.equals("Milliliter"))
-        {
-            valueInLiters = value / 1000;
-        }
-        else if (fromUnit.equals("Liter"))
-        {
-            valueInLiters = value;
-        }
-        else if (fromUnit.equals("Cubic meter"))
-        {
-            valueInLiters = value * 1000;
-        }
-        else if (fromUnit.equals("Gallon (US)"))
-        {
-            valueInLiters = value * 3.78541;
-        }
-        else if (fromUnit.equals("Quart"))
-        {
-            valueInLiters = value * 0.946353;
-        }
-        else if (fromUnit.equals("Pint"))
-        {
-            valueInLiters = value * 0.473176;
-        }
-        else if (fromUnit.equals("Cubic inch"))
-        {
-            valueInLiters = value * 0.0163871;
+        switch (fromUnit) {
+            case "Milliliter":
+                valueInLiters = value / 1000;
+                break;
+            case "Liter":
+                valueInLiters = value;
+                break;
+            case "Cubic meter":
+                valueInLiters = value * 1000;
+                break;
+            case "Gallon (US)":
+                valueInLiters = value * 3.78541;
+                break;
+            case "Quart":
+                valueInLiters = value * 0.946353;
+                break;
+            case "Pint":
+                valueInLiters = value * 0.473176;
+                break;
+            case "Cubic inch":
+                valueInLiters = value * 0.0163871;
+                break;
         }
 
-        double result = 0;
-        if (toUnit.equals("Milliliter"))
-        {
-            result = valueInLiters * 1000;
+        switch (toUnit) {
+            case "Milliliter":
+                return valueInLiters * 1000;
+            case "Liter":
+                return valueInLiters;
+            case "Cubic meter":
+                return valueInLiters / 1000;
+            case "Gallon (US)":
+                return valueInLiters / 3.78541;
+            case "Quart":
+                return valueInLiters / 0.946353;
+            case "Pint":
+                return valueInLiters / 0.473176;
+            case "Cubic inch":
+                return valueInLiters / 0.0163871;
+            default:
+                return 0;
         }
-        else if (toUnit.equals("Liter"))
-        {
-            result = valueInLiters;
-        }
-        else if (toUnit.equals("Cubic meter"))
-        {
-            result = valueInLiters / 1000;
-        }
-        else if (toUnit.equals("Gallon (US)"))
-        {
-            result = valueInLiters / 3.78541;
-        }
-        else if (toUnit.equals("Quart"))
-        {
-            result = valueInLiters / 0.946353;
-        }
-        else if (toUnit.equals("Pint"))
-        {
-            result = valueInLiters / 0.473176;
-        }
-        else if (toUnit.equals("Cubic inch"))
-        {
-            result = valueInLiters / 0.0163871;
-        }
-
-        return result;
     }
 }

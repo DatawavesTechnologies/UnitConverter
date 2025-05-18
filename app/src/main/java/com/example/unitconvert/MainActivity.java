@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout footButton = findViewById(R.id.foot);
 
         currencyButton.setOnClickListener(v -> {
-            Intent tent = new Intent(MainActivity.this, Currencyconvert.class);
+            Intent tent = new Intent(MainActivity.this, CurrencyConvertActivity.class);
             startActivity(tent);
         });
 
@@ -130,6 +130,11 @@ public class MainActivity extends AppCompatActivity {
 
         frequencyButton.setOnClickListener(v -> {
             Intent tent = new Intent(MainActivity.this,FrequencyActivity.class);
+            startActivity(tent);
+        });
+
+        digitalButton.setOnClickListener(v -> {
+            Intent tent = new Intent(MainActivity.this,DigitalActivity.class);
             startActivity(tent);
         });
     }
