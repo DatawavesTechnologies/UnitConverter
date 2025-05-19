@@ -12,35 +12,15 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.UnitConvert"
         tools:targetApi="31">
-        <activity
-            android:name=".MainActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+    <activity
+        android:name=".MainActivity"
+        android:exported="true">
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity android:name=".CurrencyConvertActivity"/>
-        <activity android:name=".AreaActivity"/>
-        <activity android:name=".DataActivity"/>
-        <activity android:name=".ShoeActivity"/>
-        <activity android:name=".ScreenActivity"/>
-        <activity android:name=".CookingActivity"/>
-        <activity android:name=".PowerActivity"/>
-        <activity android:name=".TemperatureActivity"/>
-        <activity android:name=".TimeActivity"/>
-        <activity android:name=".SpeedActivity"/>
-        <activity android:name=".WeighttActivity"/>
-        <activity android:name=".MileageActivity"/>
-        <activity android:name=".VolumeActivity"/>
-        <activity android:name=".AngleActivity"/>
-        <activity android:name=".PressureActivity"/>
-        <activity android:name=".FrequencyActivity"/>
-        <activity android:name=".EnergyActivity"/>
-        <activity android:name=".LengthActivity"/>
-        <activity android:name=".DigitalActivity"/>
-        <activity android:name=".ClothingActivity"/>
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+    </activity>
+    <activity android:name=".ConvertActivity"/>
     </application>
-
 </manifest>
